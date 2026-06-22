@@ -8,3 +8,4 @@ dist/
 *.spec
 _tester_work_*/
 ai_config.json
+*.lnk

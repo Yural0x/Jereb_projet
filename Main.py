@@ -49,8 +49,20 @@ except ImportError:
 #  поправ _PROJECT_ROOT нижче вручну.
 # ──────────────────────────────────────────────
 def _find_project_root() -> str:
-    """Шукає папку 'Jereb_project_1' серед батьківських директорій файлу."""
-    here = os.path.abspath(os.path.dirname(__file__))
+    """
+    Шукає папку 'Jereb_project_1' серед батьківських директорій файлу.
+
+    КРИТИЧНО для збірки в .exe (PyInstaller): __file__ усередині
+    скомпільованого .exe вказує на тимчасову внутрішню директорію
+    розпакування (_MEIxxxxx), а НЕ на реальне місце, де лежить сам .exe.
+    Тому в "frozen"-режимі (ознака PyInstaller — sys.frozen == True)
+    беремо за точку відліку директорію самого .exe (sys.executable),
+    а не __file__.
+    """
+    if getattr(sys, "frozen", False):
+        here = os.path.abspath(os.path.dirname(sys.executable))
+    else:
+        here = os.path.abspath(os.path.dirname(__file__))
     cur = here
     for _ in range(8):  # обмежена кількість підйомів вгору
         if os.path.basename(cur) == "Jereb_project_1":
@@ -62,7 +74,7 @@ def _find_project_root() -> str:
         if parent == cur:
             break
         cur = parent
-    # Фолбек: припускаємо що app.py лежить прямо в Jereb_project_1
+    # Фолбек: припускаємо що app.py (чи .exe) лежить прямо в Jereb_project_1
     return here
 
 
