@@ -1,0 +1,10 @@
+*.exe
+*_bin
+__pycache__/
+*.pyc
+*.pyo
+build/
+dist/
+*.spec
+_tester_work_*/
+ai_config.json

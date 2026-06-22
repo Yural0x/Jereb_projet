@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <title>Степінь за модулем</title>
+  <style>
+:root {
+  --bg: #070d18; --bg-card: #0c1a2e; --line: #1e3a5f; --muted: #7e93b3;
+  --text: #c8d8f0; --text-soft: #a8bcd8; --accent: #1e4080; --accent-hover: #2a5aaa;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); }
+body {
+  font-family: Georgia, 'Times New Roman', serif; color: var(--text-soft);
+  max-width: 1180px; margin: 24px auto; padding: 0 24px; line-height: 1.5; font-size: 17px;
+}
+h1 { font-size: 30px; margin: 0 0 6px; color: var(--text); }
+h2 { font-size: 22px; margin: 26px 0 8px; color: var(--text); }
+.limits { font-style: italic; color: var(--muted); margin: 0 0 4px; }
+.diff { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: bold;
+        display: inline-block; padding: 3px 12px; border-radius: 12px; margin: 0 0 18px; font-style: normal; }
+.diff.easy { background: #0d3d1a; color: #86ffa8; }
+p { margin: 6px 0; }
+i { color: var(--text); font-style: italic; }
+sup { font-size: 11px; }
+table { width: 100%; border-collapse: collapse; margin: 10px 0 8px; table-layout: fixed; }
+th {
+  text-align: left; font-size: 16px; font-family: 'Segoe UI', Arial, sans-serif; font-weight: bold;
+  color: var(--text); padding: 10px 28px 10px 4px; border-bottom: 1px solid var(--line); position: relative;
+}
+td {
+  padding: 16px 4px; border-bottom: 1px solid var(--line); font-family: 'Courier New', monospace;
+  color: var(--text-soft); vertical-align: top; white-space: pre;
+}
+col.io { width: 50%; }
+td:first-child { padding-right: 36px; }
+.copy-btn {
+  position: absolute; right: 4px; top: 6px; font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 11px; font-weight: bold; color: var(--text-soft); background: var(--accent);
+  border: 1px solid var(--accent-hover); border-radius: 5px; padding: 4px 10px;
+  font-style: normal; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.copy-btn:hover { background: var(--accent-hover); color: #fff; }
+.copy-btn:active { background: #15305f; }
+.copy-btn.copied { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+  </style>
+</head>
+<body>
+  <h1>Степінь за модулем</h1>
+  <p class="limits">Обмеження: 1 сек., 256 МіБ</p>
+  <span class="diff easy">Складність: легка</span>
+  <p>Обчисліть <i>a</i> у степені <i>n</i> за модулем 1000000007. Показник може бути дуже великим, тож звичайне множення в циклі не підійде.</p>
+
+    <h2>Вхідні дані</h2>
+    <p>У єдиному рядку — два числа <i>a</i> і <i>n</i>.</p>
+    <h2>Вихідні дані</h2>
+    <p>Значення <i>a</i><sup>n</sup> mod 1000000007.</p>
+    <h2>Обмеження</h2>
+    <p>0 &le; <i>a</i> &le; 10<sup>9</sup>; 0 &le; <i>n</i> &le; 10<sup>18</sup>.</p>
+
+  <h2>Приклади</h2>
+
+    <table>
+      <colgroup><col class="io"><col class="io"></colgroup>
+      <tr>
+        <th>Вхідні дані (stdin)<button class="copy-btn" onclick="copyExample(this, 'in0')">копіювати</button></th>
+        <th>Вихідні дані (stdout)</th>
+      </tr>
+      <tr><td id="in0">2 10</td><td>1024</td></tr>
+    </table>
+
+    <table>
+      <colgroup><col class="io"><col class="io"></colgroup>
+      <tr>
+        <th>Вхідні дані (stdin)<button class="copy-btn" onclick="copyExample(this, 'in1')">копіювати</button></th>
+        <th>Вихідні дані (stdout)</th>
+      </tr>
+      <tr><td id="in1">3 0</td><td>1</td></tr>
+    </table>
+
+  <h2>Примітки</h2>
+    <p>2 у степені 10 = 1024.</p>
+    <p>Будь-яке число у степені 0 дорівнює 1.</p>
+
+  <script>
+
+    function showCopied(btn) {
+      btn.textContent = 'скопійовано'; btn.classList.add('copied');
+      setTimeout(function () { btn.textContent = 'копіювати'; btn.classList.remove('copied'); }, 1200);
+    }
+    function copyExample(btn, elId) {
+      var text = document.getElementById(elId).textContent;
+      var ta = document.createElement('textarea'); ta.value = text;
+      ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.left = '0'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok) { showCopied(btn); }
+      else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { showCopied(btn); }, function () {});
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+// common/tester_main_multilang.inc
+// Альтернатива tester_main.inc: те саме, але розв'язок користувача може бути
+// будь-якою з 10 підтримуваних мов (визначається за розширенням файлу).
+// Підключається наприкінці *_tester.cpp після визначення:
+//   - PROBLEM_NAME, NUM_TESTS, TL_MS
+//   - TestCase genTest(mt19937& rng, int idx)
+// і після #include "../../common/language.hpp" (замість tester_common.hpp напряму).
+//
+// Відмінність від tester_main.inc: аргумент командного рядка - це шлях до
+// файлу з розв'язком у БУДЬ-ЯКІЙ із підтримуваних мов (визначається за
+// розширенням: .cpp .c .py .js .ts .java .cs .go .rs .php). Прапор --source
+// тут не застосовується - мова потребує реального файлу з правильним
+// розширенням (а не довільного тексту), бо саме розширення визначає, який
+// компілятор/інтерпретатор використати.
+
+#ifndef PROBLEM_NAME
+#define PROBLEM_NAME "Без назви"
+#endif
+
+int main(int argc, char** argv) {
+    if (argc < 2) {
+        cerr << "Використання: " << argv[0] << " <шлях_до_розвязку>\n";
+        cerr << "  Мова визначається за розширенням файлу:\n";
+        cerr << "    .cpp/.cc/.cxx -> C++      .c -> C            .py -> Python\n";
+        cerr << "    .js/.mjs -> JavaScript    .ts -> TypeScript  .java -> Java\n";
+        cerr << "    .cs -> C#                 .go -> Go          .rs -> Rust\n";
+        cerr << "    .php -> PHP\n";
+        cerr << "  Прапори:\n";
+        cerr << "    --quiet    компактний вивід\n";
+        cerr << "    --seed N   змінити сід генератора тестів\n";
+        return 2;
+    }
+
+    string sourcePath = argv[1];
+    bool quiet = false;
+    unsigned int seed = 20260620u;
+    for (int i = 2; i < argc; i++) {
+        string a = argv[i];
+        if (a == "--quiet") quiet = true;
+        else if (a == "--seed" && i + 1 < argc) { seed = (unsigned int)stoul(argv[++i]); }
+    }
+
+    Lang lang = detectLanguage(sourcePath);
+    if (lang == Lang::UNKNOWN) {
+        cout << "[" << verdictName(Verdict::CE) << "] Не вдалося визначити мову за розширенням файлу: "
+             << sourcePath << "\n";
+        return 1;
+    }
+
+    string workDir = "./_tester_work_" + to_string(getpid());
+    int mkdirRc = system(("mkdir -p " + workDir).c_str());
+    if (mkdirRc != 0) {
+        cerr << "Не вдалося створити робочу теку\n";
+        return 2;
+    }
+
+    LanguagePrep prep;
+    string prepLog;
+    bool ok = prepareSolution(sourcePath, workDir, prep, prepLog);
+    if (!ok) {
+        cout << "[" << verdictName(Verdict::CE) << "] Помилка підготовки розв'язку (" << langName(lang) << "):\n";
+        cout << prepLog << "\n";
+        (void)system(("rm -rf " + workDir).c_str());
+        return 1;
+    }
+
+    mt19937 rng(seed);
+    vector<TestCase> tests;
+    tests.reserve(NUM_TESTS);
+    for (int i = 0; i < NUM_TESTS; i++) tests.push_back(genTest(rng, i));
+
+    cout << "Задача: " << PROBLEM_NAME << "\n";
+    cout << "Мова розв'язку: " << langName(lang) << "\n";
+    cout << "Кількість тестів: " << NUM_TESTS << ", ліміт часу: " << TL_MS << " мс\n\n";
+
+    TestSummary summary;
+    summary.total = (int)tests.size();
+    string compactLine;
+    for (int i = 0; i < (int)tests.size(); i++) {
+        const auto& tc = tests[i];
+        RunResult rr = runCommand(prep.runArgv, tc.input, TL_MS, prep.runDir);
+        Verdict v;
+        if (rr.timedOut) { v = Verdict::TL; summary.tl++; }
+        else if (rr.crashed) { v = Verdict::RE; summary.re++; }
+        else if (outputsMatch(tc.expectedOutput, rr.output)) { v = Verdict::OK; summary.ok++; }
+        else { v = Verdict::WA; summary.wa++; }
+        summary.perTest.push_back({i + 1, v});
+        if (!quiet) {
+            cout << "Тест " << setw(3) << (i + 1) << "/" << tests.size()
+                 << "  [" << verdictName(v) << "]"
+                 << "  час=" << rr.timeMs << "мс" << "\n";
+        } else {
+            char c = v == Verdict::OK ? '.' : (v == Verdict::WA ? 'W' : (v == Verdict::TL ? 'T' : 'R'));
+            compactLine.push_back(c);
+            if (compactLine.size() % 50 == 0) { cout << compactLine << "\n"; compactLine.clear(); }
+        }
+    }
+    if (quiet && !compactLine.empty()) cout << compactLine << "\n";
+
+    printSummary(summary);
+
+    (void)system(("rm -rf " + workDir).c_str());
+    return (summary.ok == summary.total) ? 0 : 1;
+}

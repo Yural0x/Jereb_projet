@@ -1,0 +1,63 @@
+// HARD_lca_tester.cpp — "Сума на шляху"
+#include "../../common/tester_common.hpp"
+using namespace tester;
+static const int NUM_TESTS = 100;
+static const int TL_MS = 2000;
+
+static TestCase genTest(mt19937& rng, int idx) {
+    int n = idx == 0 ? 5 : uniform_int_distribution<int>(1, 2000)(rng);
+    vector<long long> val(n+1);
+    uniform_int_distribution<long long> vd(-1000000000LL, 1000000000LL);
+    for (int i = 1; i <= n; i++) val[i] = vd(rng);
+    if (idx == 0) for (int i = 1; i <= n; i++) val[i] = i;
+
+    vector<pair<int,int>> edges;
+    if (idx == 0) edges = {{1,2},{1,3},{2,4},{2,5}};
+    else for (int i = 2; i <= n; i++) edges.push_back({uniform_int_distribution<int>(1,i-1)(rng), i});
+
+    vector<vector<int>> adj(n+1);
+    for (auto& e : edges) { adj[e.first].push_back(e.second); adj[e.second].push_back(e.first); }
+
+    vector<int> parent(n+1,0), depth(n+1,0);
+    vector<long long> pathSum(n+1,0); // сума значень від кореня до вершини включно
+    vector<bool> visited(n+1,false);
+    queue<int> bq; bq.push(1); visited[1]=true; pathSum[1]=val[1];
+    while (!bq.empty()) {
+        int x = bq.front(); bq.pop();
+        for (int y : adj[x]) if (!visited[y]) {
+            visited[y]=true; parent[y]=x; depth[y]=depth[x]+1;
+            pathSum[y] = pathSum[x] + val[y];
+            bq.push(y);
+        }
+    }
+    auto lca = [&](int u, int v) {
+        while (depth[u]>depth[v]) u=parent[u];
+        while (depth[v]>depth[u]) v=parent[v];
+        while (u!=v) { u=parent[u]; v=parent[v]; }
+        return u;
+    };
+
+    int q = idx == 0 ? 2 : uniform_int_distribution<int>(1, 300)(rng);
+    stringstream in; in << n << "\n";
+    for (int i = 1; i <= n; i++) in << val[i] << (i<n?' ':'\n');
+    for (auto& e : edges) in << e.first << " " << e.second << "\n";
+    in << q << "\n";
+    stringstream out;
+    uniform_int_distribution<int> nd(1, n);
+    for (int t = 0; t < q; t++) {
+        int u, v;
+        if (idx == 0) { u=4; v=(t==0)?5:3; }
+        else { u = nd(rng); v = nd(rng); }
+        in << u << " " << v << "\n";
+        int l = lca(u, v);
+        // сума на шляху = pathSum[u] + pathSum[v] - 2*pathSum[l] + val[l]
+        long long sum = pathSum[u] + pathSum[v] - 2*pathSum[l] + val[l];
+        out << sum << "\n";
+    }
+    string e = out.str();
+    if (!e.empty() && e.back() == '\n') e.pop_back();
+    TestCase tc; tc.input = in.str(); tc.expectedOutput = e;
+    return tc;
+}
+#define PROBLEM_NAME "Сума на шляху (LCA, складна)"
+#include "../../common/tester_main.inc"
